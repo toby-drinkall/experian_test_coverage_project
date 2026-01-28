@@ -174,7 +174,7 @@ Follow these steps exactly:
 **Step 2: Baseline Coverage**
 - Run: npm test -- --coverage
 - Record the current coverage for ${fileInfo.name}
-- Send message: "Step 2 complete: Baseline coverage - Statements: X%, Branches: X%, Functions: X%, Lines: X%"
+- Send message: "Step 2 complete: Baseline coverage - Statements: X%, Functions: X%, Lines: X%"
 - UPDATE STRUCTURED OUTPUT with baseline numbers
 
 **Step 3: Analyze & Plan**
@@ -221,8 +221,7 @@ Success criteria:
 ## STRUCTURED OUTPUT (update after each test run)
 {
   "statements": 0,
-  "branches": 0,
-  "functions": 0,
+  functions: 0,
   "lines": 0,
   "tests_passed": 0,
   "tests_failed": 0,
@@ -272,13 +271,11 @@ Success criteria:
             fileName: fileInfo.name,
             oldCoverage: {
                 statements: fileInfo.statements,
-                branches: fileInfo.branches,
                 functions: fileInfo.functions,
                 lines: fileInfo.lines
             },
             newCoverage: {
                 statements: structuredOutput.statements || fileInfo.statements,
-                branches: structuredOutput.branches || fileInfo.branches,
                 functions: structuredOutput.functions || fileInfo.functions,
                 lines: structuredOutput.lines || fileInfo.lines
             },
@@ -313,13 +310,12 @@ Run the test suite for a TypeScript/Jest project and report results.
 Report:
 - Number of test suites
 - Number of tests passed/failed
-- Coverage summary (statements, branches, functions, lines)
+- Coverage summary (statements, functions, lines)
 
 ## STRUCTURED OUTPUT
 {
   "statements": 0,
-  "branches": 0,
-  "functions": 0,
+  functions: 0,
   "lines": 0,
   "tests_passed": 0,
   "tests_failed": 0,
@@ -350,7 +346,6 @@ NO PR REQUIRED - just run tests and report.
             url: session.url,
             coverage: {
                 statements: so.statements || 0,
-                branches: so.branches || 0,
                 functions: so.functions || 0,
                 lines: so.lines || 0
             },
@@ -385,7 +380,6 @@ Run coverage scan for a TypeScript/Jest project and report detailed results.
 Report for each source file:
 - File name
 - Statements %
-- Branches %
 - Functions %
 - Lines %
 - Uncovered line numbers
@@ -393,11 +387,10 @@ Report for each source file:
 ## STRUCTURED OUTPUT
 {
   "statements": 0,
-  "branches": 0,
-  "functions": 0,
+  functions: 0,
   "lines": 0,
   "files": [
-    {"name": "calculator.ts", "statements": 0, "branches": 0, "functions": 0, "lines": 0}
+    {"name": "calculator.ts", "statements": 0, "functions": 0, "lines": 0}
   ]
 }
 
@@ -425,7 +418,6 @@ NO PR REQUIRED - just scan and report.
             url: session.url,
             coverage: {
                 statements: so.statements || 0,
-                branches: so.branches || 0,
                 functions: so.functions || 0,
                 lines: so.lines || 0
             },

@@ -31,11 +31,11 @@ experian_test_coverage_project/
 
 ## Current Coverage
 
-| File | Statements | Branches | Functions | Lines |
-|------|------------|----------|-----------|-------|
-| calculator.ts | 36.36% | 0% | 33.33% | 36.36% |
-| stringUtils.ts | 42.1% | 0% | 16.66% | 44.44% |
-| **Total** | **39.02%** | **0%** | **25%** | **40%** |
+| File | Statements | Functions | Lines |
+|------|------------|-----------|-------|
+| calculator.ts | 36% | 33% | 36% |
+| stringUtils.ts | 42% | 17% | 44% |
+| **Total** | **39%** | **25%** | **40%** |
 
 ## Quick Start
 

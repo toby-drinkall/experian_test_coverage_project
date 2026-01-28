@@ -539,13 +539,13 @@
         // COVERAGE DATA - matches `go test -cover ./...`
         // TypeScript/Jest Coverage Data
         // Current: npm test -- --coverage
+        // Metrics: Statements, Functions, Lines (no branches for simplicity)
         // ============================================
         const coverageData = [
             {
                 id: 'calculator',
                 name: 'calculator.ts',
                 statements: 36.36,
-                branches: 0,
                 functions: 33.33,
                 lines: 36.36,
                 status: 'needs-work',
@@ -556,7 +556,6 @@
                 id: 'stringUtils',
                 name: 'stringUtils.ts',
                 statements: 42.1,
-                branches: 0,
                 functions: 16.66,
                 lines: 44.44,
                 status: 'needs-work',
@@ -570,7 +569,6 @@
             const n = coverageData.length;
             // Average across all files
             const avgStatements = coverageData.reduce((sum, c) => sum + c.statements, 0) / n;
-            const avgBranches = coverageData.reduce((sum, c) => sum + c.branches, 0) / n;
             const avgFunctions = coverageData.reduce((sum, c) => sum + c.functions, 0) / n;
             const avgLines = coverageData.reduce((sum, c) => sum + c.lines, 0) / n;
 
@@ -579,7 +577,6 @@
 
             return {
                 statements: avgStatements.toFixed(1),
-                branches: avgBranches.toFixed(1),
                 functions: avgFunctions.toFixed(1),
                 lines: avgLines.toFixed(1),
                 over80,

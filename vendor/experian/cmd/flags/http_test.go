@@ -22,6 +22,34 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestHTTP_String(t *testing.T) {
+	h := HTTP{
+		Requests:    stringArray{"get:/health", "post:/ping"},
+		Compression: "gzip",
+	}
+	result := h.String()
+	assert.Contains(t, result, "get:/health")
+	assert.Contains(t, result, "Compression:gzip")
+}
+
+func TestHTTP_getWarmupHTTPRequests(t *testing.T) {
+	h := HTTP{
+		Requests:    stringArray{"get:/health", "post:/ping"},
+		Compression: "",
+	}
+	requests, err := h.getWarmupHTTPRequests()
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(requests))
+	assert.Equal(t, "/health", requests[0].Path)
+}
+
+func TestHTTP_getWarmupHTTPRequestsEmpty(t *testing.T) {
+	h := HTTP{}
+	requests, err := h.getWarmupHTTPRequests()
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(requests))
+}
+
 func TestHttp_ToHttpRequests(t *testing.T) {
 	requestFlags := []string{
 		"get:/health",

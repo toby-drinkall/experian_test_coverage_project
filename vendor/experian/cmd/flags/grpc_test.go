@@ -21,6 +21,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGrpc_String(t *testing.T) {
+	g := Grpc{
+		Requests: stringArray{"svc1/ping", "svc2/method"},
+	}
+	result := g.String()
+	assert.Contains(t, result, "svc1/ping")
+	assert.Contains(t, result, "svc2/method")
+}
+
+func TestGrpc_getWarmupGrpcRequests(t *testing.T) {
+	g := Grpc{
+		Requests: stringArray{"svc1/ping", "svc2/method"},
+	}
+	requests, err := g.getWarmupGrpcRequests()
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(requests))
+	assert.Equal(t, "svc1/ping", requests[0].ServiceMethod)
+}
+
+func TestGrpc_getWarmupGrpcRequestsEmpty(t *testing.T) {
+	g := Grpc{}
+	requests, err := g.getWarmupGrpcRequests()
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(requests))
+}
+
 func TestGrpc_ToGrpcRequests(t *testing.T) {
 
 	requestFlags := []string{
@@ -34,4 +60,11 @@ func TestGrpc_ToGrpcRequests(t *testing.T) {
 	require.Equal(t, 2, len(requests))
 	assert.Equal(t, "svc1/ping", requests[0].ServiceMethod)
 	assert.Equal(t, "svc2/ping", requests[1].ServiceMethod)
+}
+
+func TestGrpc_ToGrpcRequestsEmpty(t *testing.T) {
+	requestFlags := []string{}
+	requests, err := toGrpcRequests(requestFlags)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(requests))
 }

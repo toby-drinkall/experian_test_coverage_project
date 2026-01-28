@@ -1,66 +1,147 @@
-# Vendor Subtree Setup Guide
+# Project Repository Setup Guide
 
-## Why This Repo? (mario-feature-flags-demo vs -cog)
+## Overview: Three-Repo Architecture
 
-There are **two** mario feature flag repos on GitHub:
+This project uses code from two source repositories, combined into a new project repo:
 
-| Repo | Visibility | Created | Use This? |
-|------|------------|---------|-----------|
-| `mario-feature-flags-demo-cog` | public | Dec 22, 2025 | **YES** |
-| `mario-feature-flags-demo` | private | Dec 15, 2025 | No (legacy) |
-
-**Always use `mario-feature-flags-demo-cog`** (this repo) because:
-- It's the **newer, public** version
-- The `-cog` suffix = **Cognition/Devin API integration**
-- Contains the full feature flag management dashboard
-- Has React + Tailwind CSS + Framer Motion UI
-- Automates code changes through Devin sessions
-
-The older `mario-feature-flags-demo` (without `-cog`) is a legacy private repo.
-
----
-
-## Repository Structure
-
-### PERSONAL Repository (mario-feature-flags-demo-cog)
-- **Default Branch:** `cognition-dashboard-devin-integration` (this is the ONLY branch - there is no `main` or `master`)
-- **Origin:** `https://github.com/toby-drinkall/mario-feature-flags-demo-cog.git`
-- **Working Directory:** `~/dev/mario-feature-flags-demo-cog`
-
-### EXPERIAN Repository (mittens)
-- **Default Branch:** `main`
-- **Source:** `https://github.com/ExpediaGroup/mittens.git`
-- **Location in PERSONAL:** `vendor/experian/`
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        LOCAL WORKING DIRECTORY                       │
+│                   ~/dev/mario-feature-flags-demo-cog                 │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   ┌─────────────────┐    ┌─────────────────┐    ┌────────────────┐  │
+│   │     UPSTREAM    │    │     ORIGIN      │    │    EXPERIAN    │  │
+│   │   (read-only)   │    │  (push here)    │    │   (subtree)    │  │
+│   └────────┬────────┘    └────────┬────────┘    └───────┬────────┘  │
+│            │                      │                      │           │
+│            ▼                      ▼                      ▼           │
+│   mario-feature-flags    experian_test_coverage    ../mittens       │
+│        -demo-cog              _project              (local)         │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## What We Set Up (2026-01-28)
+## The Three Repositories
 
-### 1. Cloned Both Repositories
+### 1. ORIGIN: `experian_test_coverage_project` (YOUR NEW PROJECT)
+- **GitHub:** https://github.com/toby-drinkall/experian_test_coverage_project
+- **Purpose:** This is YOUR project - all commits go here
+- **Remote name:** `origin`
+- **Push/pull:** YES
+
+### 2. UPSTREAM: `mario-feature-flags-demo-cog` (SOURCE - DO NOT MODIFY)
+- **GitHub:** https://github.com/toby-drinkall/mario-feature-flags-demo-cog
+- **Purpose:** Original source code - kept as read-only reference
+- **Remote name:** `upstream`
+- **Push/pull:** NO (read-only)
+
+### 3. EXPERIAN: `mittens` (SUBTREE SOURCE)
+- **GitHub:** https://github.com/ExpediaGroup/mittens
+- **Purpose:** Imported as subtree into `vendor/experian/`
+- **Remote name:** `experian`
+- **Location:** `~/dev/mittens` (local clone) and `vendor/experian/` (subtree)
+
+---
+
+## Why This Setup?
+
+We wanted to:
+1. Start with the `mario-feature-flags-demo-cog` codebase
+2. Add the `mittens` repo as a subtree
+3. **Keep the original repos unchanged**
+4. Push all new work to a fresh repo (`experian_test_coverage_project`)
+
+This way:
+- Original `mario-feature-flags-demo-cog` on GitHub stays untouched
+- You can still pull updates from upstream if needed
+- All your new work goes to `experian_test_coverage_project`
+
+---
+
+## Local Directory Structure
+
+**Working directory:** `~/dev/mario-feature-flags-demo-cog`
+
+(Note: The local folder is still named after the original repo, but it now points to the new project)
+
+```
+~/dev/
+├── mario-feature-flags-demo-cog/   # YOUR WORKING DIRECTORY
+│   ├── Source/                      # Main source code
+│   ├── docs/                        # Documentation (you are here)
+│   ├── vendor/
+│   │   └── experian/                # mittens subtree lives here
+│   └── ...
+│
+└── mittens/                         # Local clone (subtree source)
+```
+
+---
+
+## Remote Configuration
+
+| Remote     | GitHub Repo                          | Purpose                    |
+|------------|--------------------------------------|----------------------------|
+| `origin`   | `experian_test_coverage_project`     | **Push here** (your work)  |
+| `upstream` | `mario-feature-flags-demo-cog`       | Read-only source reference |
+| `experian` | `../mittens` (local)                 | Subtree source             |
+
+Verify with:
+```bash
+git remote -v
+```
+
+Expected output:
+```
+experian   ../mittens (fetch)
+experian   ../mittens (push)
+origin     https://github.com/toby-drinkall/experian_test_coverage_project.git (fetch)
+origin     https://github.com/toby-drinkall/experian_test_coverage_project.git (push)
+upstream   https://github.com/toby-drinkall/mario-feature-flags-demo-cog.git (fetch)
+upstream   https://github.com/toby-drinkall/mario-feature-flags-demo-cog.git (push)
+```
+
+---
+
+## Setup History (2026-01-28)
+
+### Step 1: Cloned source repositories
 ```bash
 cd ~/dev
 git clone https://github.com/toby-drinkall/mario-feature-flags-demo-cog.git
 git clone https://github.com/ExpediaGroup/mittens.git
 ```
 
-### 2. Created Safety Tag
+### Step 2: Created safety tag
 ```bash
 cd ~/dev/mario-feature-flags-demo-cog
 git tag pre-experian-import-20260128
 ```
-This tag marks the state BEFORE the experian import - use it to rollback if needed.
 
-### 3. Added Experian as Remote
+### Step 3: Added mittens as subtree
 ```bash
 git remote add experian ../mittens
 git fetch experian
-```
-
-### 4. Added Subtree
-```bash
 git subtree add --prefix=vendor/experian experian main --squash
 ```
-This imports the entire mittens repo into `vendor/experian/` as a squashed commit.
+
+### Step 4: Created new project repo and reconfigured remotes
+```bash
+# Created new repo on GitHub
+gh repo create toby-drinkall/experian_test_coverage_project --public
+
+# Renamed original origin to upstream (preserves reference)
+git remote rename origin upstream
+
+# Added new repo as origin (this is where we push)
+git remote add origin https://github.com/toby-drinkall/experian_test_coverage_project.git
+
+# Pushed everything to new repo
+git push -u origin cognition-dashboard-devin-integration
+```
 
 ---
 
@@ -69,74 +150,49 @@ This imports the entire mittens repo into `vendor/experian/` as a squashed commi
 ### Working Directory
 Always work from: `~/dev/mario-feature-flags-demo-cog`
 
-### Experian Code Location
-All experian/mittens code lives at: `vendor/experian/`
+### Branch
+Use: `cognition-dashboard-devin-integration` (the only branch)
 
-### Branch to Work On
-Use: `cognition-dashboard-devin-integration` (this is the default and only branch)
+### Committing & Pushing
+```bash
+git add <files>
+git commit -m "Your message"
+git push                          # Pushes to experian_test_coverage_project
+```
+
+### Accessing Experian/Mittens Code
+All mittens code is at: `vendor/experian/`
 
 ---
 
-## Updating Experian Code (Future)
+## Updating from Source Repos (Future)
 
-When you need to pull updates from the mittens repo:
-
+### Pull updates from mittens (subtree)
 ```bash
-cd ~/dev/mario-feature-flags-demo-cog
 git subtree pull --prefix=vendor/experian experian main --squash
 ```
 
-This will:
-1. Fetch latest changes from mittens/main
-2. Squash them into a single commit
-3. Merge into your current branch
-
----
-
-## Avoiding Branch/Merge Issues
-
-### Key Points
-
-1. **No `main` branch exists in PERSONAL** - Don't try to switch to `main`, it doesn't exist. The default branch is `cognition-dashboard-devin-integration`.
-
-2. **Always verify your branch before making changes:**
-   ```bash
-   git branch -v
-   ```
-
-3. **Before subtree operations, ensure clean working tree:**
-   ```bash
-   git status
-   ```
-
-4. **Create safety tags before major operations:**
-   ```bash
-   git tag backup-$(date +%Y%m%d-%H%M)
-   ```
-
-### Rollback Procedure
-
-If something goes wrong with the subtree:
+### Pull updates from original mario repo (if needed)
 ```bash
-# Reset to pre-import state
-git reset --hard pre-experian-import-20260128
-
-# Or reset to any backup tag
-git reset --hard backup-YYYYMMDD-HHMM
+git fetch upstream
+git merge upstream/cognition-dashboard-devin-integration
 ```
 
 ---
 
-## Remote Configuration
+## Safety & Rollback
 
-| Remote   | URL                           | Purpose              |
-|----------|-------------------------------|----------------------|
-| origin   | github.com/toby-drinkall/mario-feature-flags-demo-cog | Main repo (push/pull) |
-| experian | ../mittens (local)            | Subtree source       |
+### Safety Tags
+- `pre-experian-import-20260128` - State before mittens import
 
-To verify:
+### Create new safety tag before risky operations
 ```bash
-git remote -v
+git tag backup-$(date +%Y%m%d-%H%M)
+```
+
+### Rollback if needed
+```bash
+git reset --hard pre-experian-import-20260128
 ```
 
 ---
@@ -146,38 +202,26 @@ git remote -v
 | Item | Value |
 |------|-------|
 | Working Dir | `~/dev/mario-feature-flags-demo-cog` |
-| Default Branch | `cognition-dashboard-devin-integration` |
+| Push To | `origin` → `experian_test_coverage_project` |
+| Branch | `cognition-dashboard-devin-integration` |
 | Experian Code | `vendor/experian/` |
-| Safety Tag | `pre-experian-import-20260128` |
-| Update Command | `git subtree pull --prefix=vendor/experian experian main --squash` |
+| Original Source | `upstream` → `mario-feature-flags-demo-cog` (read-only) |
 
 ---
 
-## What This Repo Does
+## Project Background
 
-**mario-feature-flags-demo-cog** is a full-stack feature flag management system for Super Mario Brothers:
+This project combines:
 
-### Core Features
-- **FullScreenMario Game** - HTML5 remake of classic Super Mario Bros
-- **Feature Flag Dashboard** - React-based UI to manage game modes and physics
-- **Devin API Integration** - Automates code changes through AI sessions
-- **15 Game Modes** - Toggleable features (Bouncy Bounce, Dark Mode, Hard Mode, etc.)
-- **4 Physics Constants** - Modifiable parameters (jumpmod, gravity, etc.)
+### From mario-feature-flags-demo-cog (upstream):
+- FullScreenMario HTML5 game
+- Feature flag management dashboard (React + Tailwind + Framer Motion)
+- Devin API integration for automated code changes
+- 15 game modes + 4 physics constants
 
-### Dashboard Capabilities
-- Remove/restore/replace feature flags via UI
-- Automated PR creation and testing
-- Real-time progress tracking
-- GitHub integration for merge verification
-- Automatic backup system before changes
-
-### Key Directories
-```
-Source/                  # Main source (dashboard, game, settings)
-docs/                    # Technical documentation
-backups/                 # Feature flag backups
-vendor/experian/         # Imported mittens repo (subtree)
-```
+### From mittens (vendor/experian):
+- ExpediaGroup's mittens project
+- Imported as git subtree
 
 ### Running the Project
 ```bash

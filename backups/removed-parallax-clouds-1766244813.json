@@ -1,8 +1,0 @@
-{
-  "feature_name": "Parallax Clouds",
-  "removed_at": "2025-12-20T15:33:33+00:00",
-  "source_file": "Source/settings/mods.js",
-  "line_start": 441,
-  "line_end": 457,
-  "original_code": "        }, {\n            \"name\": \"Parallax Clouds\",\n            \"description\": \"Clouds in the sky scroll at about 63% the normal rate.\",\n            \"author\": {\n                \"name\": \"Josh Goldberg\",\n                \"email\": \"josh@fullscreenmario.com\"\n            },\n            \"enabled\": false,\n            \"events\": {\n                \"onModEnable\": function () {\n                    this.ObjectMaker.getFunction(\"Cloud\").prototype.parallaxHoriz = .7;\n                },\n                \"onModDisable\": function () {\n                    this.ObjectMaker.getFunction(\"Cloud\").prototype.parallaxHoriz = undefined;\n                }\n            }\n        }, {\n"
-}

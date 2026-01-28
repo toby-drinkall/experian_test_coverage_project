@@ -1,7 +1,0 @@
-{
-  "feature": "Super Fireballs",
-  "removedAt": "$(date -Iseconds)",
-  "originalFile": "Source/settings/mods.js",
-  "originalLines": "537-555",
-  "code": "        }, {\n            \"name\": \"Super Fireballs\",\n            \"description\": \"Fireballs blow up solids, and Mario has unlimited.\",\n            \"author\": {\n                \"name\": \"Josh Goldberg\",\n                \"email\": \"josh@fullscreenmario.com\"\n            },\n            \"enabled\": false,\n            \"events\": {\n                \"onModEnable\": function (mod) {\n                    this.ObjectMaker.getFunction(\"solid\").prototype.nofire = 0;\n                    this.ObjectMaker.getFunction(\"solid\").prototype.firedeath = 1;\n                },\n                \"onModDisable\": function (mod) {\n                    this.ObjectMaker.getFunction(\"solid\").prototype.nofire = 2;\n                    this.ObjectMaker.getFunction(\"solid\").prototype.firedeath = 0;\n                }\n            }\n        }"
-}

@@ -1,7 +1,0 @@
-{
-  "featureName": "Bouncy Bounce",
-  "removedAt": "$(date -Iseconds)",
-  "originalFile": "Source/settings/mods.js",
-  "originalLines": "4-36",
-  "code": "        {\n            \"name\": \"Bouncy Bounce\",\n            \"description\": \"Mario landing causes him to jump.\",\n            \"author\": {\n                \"name\": \"Josh Goldberg\",\n                \"email\": \"josh@fullscreenmario.com\"\n            },\n            \"enabled\": false,\n            \"events\": {\n                \"onPlayerLanding\": function (mod) {\n                    var player = this.player;\n                    \n                    // Don't trigger during cutscenes or small landings\n                    if (\n                        player.FSM.MapScreener.nokeys\n                        || Math.abs(player.yvel) < player.FSM.unitsize / 4\n                    ) {\n                        return;\n                    }\n                    \n                    if (player.resting.actionTop) {\n                        player.resting.actionTop(player, player.resting);\n                    }\n                    \n                    player.jumpcount = 0;\n                    player.resting = undefined;\n                    player.yvel = -3 * player.FSM.unitsize;\n                },\n                \"onPlayerActionLeft\": function (mod, player, other) {\n                    other.actionLeft(player, other, true);\n                }\n            },\n        }"
-}

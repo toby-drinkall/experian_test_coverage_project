@@ -1,166 +1,115 @@
-# Experian Test Coverage Dashboard
+# Test Coverage Automation Dashboard
 
-A test coverage automation dashboard for the Mittens service warmup tool, powered by Devin AI. This dashboard visualizes Go test coverage and automates the creation of test improvements via Devin sessions.
+A test coverage automation dashboard powered by Devin AI. This dashboard visualizes Jest test coverage and automates test improvements via Devin sessions.
 
 ## Overview
 
-This project provides a visual dashboard for monitoring and improving test coverage in the Mittens codebase (a Go-based service warmup tool). Key capabilities:
+This project demonstrates automated test coverage improvement using Devin AI:
 
-- **Coverage Visualization** - View coverage by package with weighted statement averages
-- **Automated Test Generation** - Trigger Devin AI sessions to write tests for specific packages
-- **GitHub Integration** - Automatic PR creation and merge status tracking
-- **Coverage Trend Tracking** - Historical view of coverage improvements over time
+- **Coverage Visualization** - View coverage by file (statements, branches, functions, lines)
+- **Automated Test Generation** - Trigger Devin AI sessions to write tests
+- **GitHub Integration** - Automatic PR creation with test plans
+- **Real-time Progress** - Watch Devin's progress step-by-step
 
 ## Project Structure
 
 ```
-experian-test-coverage/
+experian_test_coverage_project/
+├── src/
+│   ├── calculator.ts        # Arithmetic functions (partially tested)
+│   ├── calculator.test.ts   # Tests for calculator
+│   ├── stringUtils.ts       # String utilities (minimal tests)
+│   └── stringUtils.test.ts  # Tests for stringUtils
 ├── Source/
-│   ├── coverage-dashboard.html   # Main dashboard UI (React + Tailwind)
-│   ├── coverage-api-config.js    # Devin API integration
-│   └── index.html                # Redirect to dashboard
-├── vendor/
-│   └── experian/                 # Mittens codebase (Go)
-│       ├── cmd/                  # CLI commands
-│       ├── pkg/                  # Core packages
-│       │   ├── grpc/             # gRPC client/server
-│       │   ├── http/             # HTTP client/server
-│       │   └── warmup/           # Warmup orchestration
-│       └── internal/pkg/         # Internal packages
-├── docs/                         # Documentation
-├── dev-server.js                 # Express server with API proxy
-├── package.json                  # Node.js dependencies
-└── .env                          # API key (not committed)
+│   ├── coverage-dashboard.html   # Dashboard UI (React + Tailwind)
+│   └── coverage-api-config.js    # Devin API integration
+├── dev-server.js            # Express server with API proxy
+├── jest.config.js           # Jest configuration
+├── tsconfig.json            # TypeScript configuration
+└── package.json             # Dependencies
 ```
 
-## Mittens Packages
+## Current Coverage
 
-The dashboard tracks coverage for these packages:
+| File | Statements | Branches | Functions | Lines |
+|------|------------|----------|-----------|-------|
+| calculator.ts | 36.36% | 0% | 33.33% | 36.36% |
+| stringUtils.ts | 42.1% | 0% | 16.66% | 44.44% |
+| **Total** | **39.02%** | **0%** | **25%** | **40%** |
 
-| Package | Description |
-|---------|-------------|
-| **grpc** | gRPC client implementation for warmup requests with TLS support |
-| **http** | HTTP client for warmup requests with connection pooling |
-| **warmup** | Orchestrates concurrent warmup by spawning workers |
-| **safe** | Thread-safe atomic operations for concurrent access |
-| **flags** | CLI flag parsing for command-line configuration |
-| **failuraccu** | Tracks warmup failures with threshold detection |
-| **probes** | Health check probes for readiness/liveness |
-| **grpcsrv** | gRPC server for testing warmup requests |
-| **httpsrv** | HTTP server for testing warmup requests |
+## Quick Start
 
-## Installation
-
-### Prerequisites
-- Node.js v14+
-- npm
-- Devin API key (for automated test generation)
-
-### Setup
-
-1. Clone the repository:
 ```bash
+# Clone and install
 git clone https://github.com/toby-drinkall/experian_test_coverage_project.git
 cd experian_test_coverage_project
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
 
-3. Configure Devin API:
-```bash
-cp .env.example .env
-# Edit .env and add your DEVIN_API_KEY
-```
+# Run tests locally
+npm test
 
-4. Start the server:
-```bash
+# Start dashboard
 npm start
+# Open http://localhost:8000/coverage-dashboard.html
 ```
 
-5. Open the dashboard:
-```
-http://localhost:8000/coverage-dashboard.html
-```
+## Running Tests
 
-## Usage
+```bash
+# Run with coverage
+npm test
 
-### Viewing Coverage
-
-The dashboard displays:
-- **Total Coverage** - Weighted average across all packages (by statement count)
-- **Needs Improvement** - Packages below 80% coverage (shown in red)
-- **Over 80%** - Packages meeting the 80% threshold (shown in green)
-
-### Improving Coverage
-
-1. Find a package needing improvement
-2. Click the **Improve** button
-3. Select scope:
-   - **Tests only** - Write tests without modifying source code
-   - **Tests + Refactor** - May make minimal code changes for testability
-4. Click **Start Automation**
-5. Monitor Devin's progress in the modal
-6. Review and merge the created PR on GitHub
-
-### GitHub Sync
-
-Click the **GitHub Sync** badge to verify coverage data matches the repository state.
-
-### Run Coverage Check
-
-Click **Run Coverage Check** to trigger a full coverage scan via Devin.
-
-## API Integration
-
-The dev server proxies requests to the Devin API:
-
-- `POST /api/devin/sessions` - Create new Devin session
-- `GET /api/devin/sessions/:id` - Get session status
-- `DELETE /api/devin/sessions/:id` - Cancel session
-- `GET /api/devin/_status` - Check API configuration
-
-## Run History
-
-Completed Devin sessions appear in the **Runs** tab with:
-- Package name and run type (Improve/Scan)
-- Coverage delta (before/after)
-- Test results (passed/failed)
-- PR link and merge status
-
-Note: Runs are only added when a Devin session completes successfully with a valid PR.
-
-## Technical Details
-
-### Dashboard Architecture
-- **React 18** - Component-based UI
-- **Tailwind CSS** - Utility-first styling with glassmorphism design
-- **Chart.js patterns** - SVG-based trend visualization
-- **Babel Standalone** - Client-side JSX compilation
-
-### Coverage Calculation
-Coverage is calculated as a weighted average based on statement count:
-```
-total_coverage = sum(package_coverage * statement_count) / sum(statement_count)
+# Watch mode
+npm run test:watch
 ```
 
-This gives larger packages more weight in the overall percentage.
+## Using the Dashboard
 
-## Environment Variables
+### Improve Coverage
+1. Select a file (e.g., `calculator.ts`)
+2. Click **Improve**
+3. Watch Devin:
+   - Clone repo and run baseline tests
+   - Analyze untested functions
+   - Create test plan
+   - Write tests
+   - Verify all tests pass
+   - Create PR with results
 
+### What Devin Does
+1. **Setup** - Clones repo, installs dependencies
+2. **Baseline** - Runs `npm test -- --coverage`
+3. **Analyze** - Identifies untested functions
+4. **Plan** - Creates test plan (visible in PR)
+5. **Write** - Adds tests following existing patterns
+6. **Verify** - Ensures all tests pass
+7. **PR** - Creates pull request with coverage report
+
+## Configuration
+
+Create `.env` file:
 ```
-DEVIN_API_KEY=your_devin_api_key_here
+DEVIN_API_KEY=your_api_key_here
 ```
 
-Without an API key, the dashboard displays coverage data but automation features are disabled.
+## Source Files
+
+### calculator.ts
+- `add(a, b)` - ✅ Tested
+- `subtract(a, b)` - ✅ Tested
+- `multiply(a, b)` - ❌ Not tested
+- `divide(a, b)` - ❌ Not tested
+- `power(base, exp)` - ❌ Not tested
+- `factorial(n)` - ❌ Not tested
+
+### stringUtils.ts
+- `capitalize(str)` - ✅ Tested
+- `reverse(str)` - ❌ Not tested
+- `isPalindrome(str)` - ❌ Not tested
+- `truncate(str, max)` - ❌ Not tested
+- `countWords(str)` - ❌ Not tested
+- `slugify(str)` - ❌ Not tested
 
 ## License
 
-MIT - See LICENSE file for details
-
-## Credits
-
-- **Mittens** - Originally by [Experian](https://github.com/ExpediaGroup/mittens)
-- **Dashboard** - Built for automated test coverage improvement with Devin AI
+MIT

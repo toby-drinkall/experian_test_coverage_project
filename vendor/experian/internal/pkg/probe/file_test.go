@@ -37,3 +37,22 @@ func TestDeleteFile(t *testing.T) {
 
 	assert.Equal(t, expected, result)
 }
+
+func TestDeleteFileNonExistent(t *testing.T) {
+	// Test deleting a file that doesn't exist - covers the error path
+	DeleteFile("non_existent_file_12345")
+	// The function logs an error but doesn't return it, so we just verify it doesn't panic
+}
+
+func TestWriteFileInvalidPath(t *testing.T) {
+	// Test writing to an invalid path - covers the error path
+	WriteFile("/invalid/path/that/does/not/exist/testfile")
+	// The function logs an error but doesn't return it, so we just verify it doesn't panic
+}
+
+func TestFileExistsOnNonExistentFile(t *testing.T) {
+	// Test FileExists on a file that doesn't exist
+	result, err := FileExists("definitely_not_a_real_file_12345")
+	require.NoError(t, err)
+	assert.False(t, result)
+}

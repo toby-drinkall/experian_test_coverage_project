@@ -1,5 +1,8 @@
 Distribution
 Distribution/**
+
+# Jest coverage output
+coverage/
 Source/**/*.md
 Source/**/*.txt
 node_modules/

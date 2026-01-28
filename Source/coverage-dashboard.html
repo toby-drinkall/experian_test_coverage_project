@@ -537,133 +537,55 @@
 
         // ============================================
         // COVERAGE DATA - matches `go test -cover ./...`
-        // Weighted total: 33.4% (from `go tool cover -func`)
+        // TypeScript/Jest Coverage Data
+        // Current: npm test -- --coverage
         // ============================================
         const coverageData = [
             {
-                id: 'safe',
-                name: 'internal/pkg/safe',
-                package: 'safe',
-                coverage: 100,
-                statements: 12,
-                status: 'complete',
-                testFile: 'utils_test.go',
-                description: 'Panic recovery utilities that wrap functions with recover logic to prevent crashes.'
-            },
-            {
-                id: 'util',
-                name: 'internal/pkg/util',
-                package: 'util',
-                coverage: 100,
-                statements: 8,
-                status: 'complete',
-                testFile: 'util_test.go',
-                description: 'Utility functions for converting header strings (key:value format) into header maps.'
-            },
-            {
-                id: 'placeholders',
-                name: 'internal/pkg/placeholders',
-                package: 'placeholders',
-                coverage: 92.7,
-                statements: 82,
-                status: 'good',
-                testFile: 'utils_test.go',
-                description: 'Interpolates dynamic placeholders in requests including dates, timestamps, and random values.'
-            },
-            {
-                id: 'http',
-                name: 'internal/pkg/http',
-                package: 'http',
-                coverage: 81.9,
-                statements: 116,
-                status: 'good',
-                testFile: 'client_test.go',
-                description: 'HTTP client wrapper supporting HTTP/1.1, HTTP/2, and cleartext protocols with TLS config.'
-            },
-            {
-                id: 'probe',
-                name: 'internal/pkg/probe',
-                package: 'probe',
-                coverage: 71.4,
-                statements: 21,
+                id: 'calculator',
+                name: 'calculator.ts',
+                statements: 36.36,
+                branches: 0,
+                functions: 33.33,
+                lines: 36.36,
                 status: 'needs-work',
-                testFile: 'file_test.go',
-                description: 'File system utilities for managing Kubernetes liveness and readiness probe files.'
+                testFile: 'calculator.test.ts',
+                description: 'Basic arithmetic operations: add, subtract, multiply, divide, power, factorial.'
             },
             {
-                id: 'internal',
-                name: 'internal/pkg/internal',
-                package: 'internal',
-                coverage: 62.5,
-                statements: 8,
+                id: 'stringUtils',
+                name: 'stringUtils.ts',
+                statements: 42.1,
+                branches: 0,
+                functions: 16.66,
+                lines: 44.44,
                 status: 'needs-work',
-                testFile: 'utils_test.go',
-                description: 'Utilities for creating temporary files used during testing.'
-            },
-            {
-                id: 'grpc',
-                name: 'internal/pkg/grpc',
-                package: 'grpc',
-                coverage: 15.4,
-                statements: 130,
-                status: 'needs-work',
-                testFile: 'utils_test.go',
-                description: 'gRPC client wrapper using grpcurl for service invocation with reflection and TLS support.'
-            },
-            {
-                id: 'cmd-flags',
-                name: 'cmd/flags',
-                package: 'flags',
-                coverage: 13.8,
-                statements: 188,
-                status: 'needs-work',
-                testFile: 'http_test.go',
-                description: 'Defines all CLI flags for configuring warmup behavior, timeouts, concurrency, and targets.'
-            },
-            {
-                id: 'cmd',
-                name: 'cmd',
-                package: 'cmd',
-                coverage: 0,
-                statements: 95,
-                status: 'none',
-                testFile: null,
-                description: 'Orchestrates warmup process: flag parsing, target creation, probes, and post-processing.'
-            },
-            {
-                id: 'warmup',
-                name: 'internal/pkg/warmup',
-                package: 'warmup',
-                coverage: 0,
-                statements: 78,
-                status: 'none',
-                testFile: null,
-                description: 'Coordinates concurrent warmup by spawning workers that send HTTP/gRPC requests.'
-            },
-                        {
-                id: 'root',
-                name: 'mittens (main)',
-                package: 'mittens',
-                coverage: 0,
-                statements: 5,
-                status: 'none',
-                testFile: null,
-                description: 'Entry point that creates configuration and runs the main command root logic.'
+                testFile: 'stringUtils.test.ts',
+                description: 'String utilities: capitalize, reverse, isPalindrome, truncate, countWords, slugify.'
             }
         ];
 
-        // Helper to calculate summary stats (WEIGHTED by statements)
+        // Helper to calculate summary stats
         const getCoverageStats = () => {
-            const withCoverage = coverageData.filter(c => c.coverage !== null && c.statements);
-            // Weighted average: sum(coverage * statements) / sum(statements)
-            const totalStatements = withCoverage.reduce((sum, c) => sum + c.statements, 0);
-            const coveredStatements = withCoverage.reduce((sum, c) => sum + (c.coverage / 100) * c.statements, 0);
-            const weightedTotal = totalStatements > 0 ? (coveredStatements / totalStatements) * 100 : 0;
+            const n = coverageData.length;
+            // Average across all files
+            const avgStatements = coverageData.reduce((sum, c) => sum + c.statements, 0) / n;
+            const avgBranches = coverageData.reduce((sum, c) => sum + c.branches, 0) / n;
+            const avgFunctions = coverageData.reduce((sum, c) => sum + c.functions, 0) / n;
+            const avgLines = coverageData.reduce((sum, c) => sum + c.lines, 0) / n;
 
-            const complete = coverageData.filter(c => c.coverage === 100).length;
-            const needsWork = coverageData.filter(c => c.coverage !== null && c.coverage < 50).length;
-            const noTests = coverageData.filter(c => c.status === 'no-tests' || c.status === 'none').length;
-            return { total: weightedTotal.toFixed(1), complete, needsWork, noTests, totalFiles: coverageData.length };
+            const over80 = coverageData.filter(c => c.statements >= 80).length;
+            const needsWork = coverageData.filter(c => c.statements < 50).length;
+
+            return {
+                statements: avgStatements.toFixed(1),
+                branches: avgBranches.toFixed(1),
+                functions: avgFunctions.toFixed(1),
+                lines: avgLines.toFixed(1),
+                over80,
+                needsWork,
+                totalFiles: n
+            };
         };
 
         // Keep old data structures as empty for compatibility (will remove later)

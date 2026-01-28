@@ -2032,7 +2032,7 @@
                                     package_name: feature.name,
                                     run_type: 'Improve',
                                     baseline_coverage: feature.statements,
-                                    final_coverage: result.newCoverage || latestStructuredOutput?.statement_coverage || latestStructuredOutput?.coverage || null,
+                                    final_coverage: result.newStatementCoverage || result.newCoverage || latestStructuredOutput?.statement_coverage || latestStructuredOutput?.coverage || null,
                                     tests_passed: latestStructuredOutput?.tests_passed || 0,
                                     tests_failed: latestStructuredOutput?.tests_failed || 0,
                                     session_id: result.sessionId,
@@ -2050,7 +2050,7 @@
                                 tests_passed: result.testsAdded || 0,
                                 tests_failed: 0,
                                 failing_tests: [],
-                                coverage: result.newCoverage || targetCoverage
+                                coverage: result.newStatementCoverage || result.newCoverage || targetCoverage
                             });
 
                             setSubDetails({
@@ -2059,7 +2059,7 @@
                                 identify: [`Analyzing uncovered code paths`],
                                 write_tests: [`Writing tests for ${feature.package}`],
                                 run_tests: [`${result.testsAdded || 0} new tests`],
-                                verify: [`Coverage: ${feature.statements}% → ${result.newCoverage || targetCoverage}%`],
+                                verify: [`Coverage: ${feature.statements}% → ${result.newStatementCoverage || result.newCoverage || targetCoverage}%`],
                                 pr: [`PR #${result.prNumber}`, `Branch: ${result.branch}`]
                             });
 
@@ -2948,14 +2948,15 @@
                 });
             };
 
-            // Update coverage for a specific package
-            const updatePackageCoverage = (packageId, newCoverage) => {
+            // Update coverage for a specific package (supports both statements and functions)
+            const updatePackageCoverage = (packageId, newStatements, newFunctions = null) => {
                 setCoverageUpdates(prev => ({
                     ...prev,
                     [packageId]: {
                         ...prev[packageId],
-                        coverage: newCoverage,
-                        status: newCoverage === 100 ? 'complete' : newCoverage >= 80 ? 'good' : newCoverage >= 50 ? 'needs-work' : newCoverage > 0 ? 'needs-work' : 'none'
+                        statements: newStatements,
+                        functions: newFunctions !== null ? newFunctions : prev[packageId]?.functions,
+                        status: newStatements === 100 ? 'complete' : newStatements >= 80 ? 'good' : newStatements >= 50 ? 'needs-work' : newStatements > 0 ? 'needs-work' : 'none'
                     }
                 }));
             };

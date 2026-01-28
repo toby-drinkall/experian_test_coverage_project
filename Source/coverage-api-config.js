@@ -7,12 +7,12 @@ const CoverageAPI = {
         apiUrl: 'http://localhost:8000/api/devin',
         apiKey: 'apk_user_ZW1haWx8NjkzNGIxYzVjYTkwY2JhNWQ3MWNkZDNlX29yZy02ODI3NzczYmQ3MTk0YzI0YTQyN2NkNGRiM2M4YmY2ZDozOGU3ZDU5NGYzNTI0MmU0OTYzNDNlOGIyNDJkY2QxZg==',
         timeout: 300000,
-        // NEW: Explicit repo configuration
         repo: {
             owner: 'toby-drinkall',
             name: 'experian_test_coverage_project',
             branch: 'cognition-dashboard-devin-integration',
-            url: 'https://github.com/toby-drinkall/experian_test_coverage_project'
+            url: 'https://github.com/toby-drinkall/experian_test_coverage_project',
+            goRoot: 'vendor/experian'  // Go code is in this subdirectory
         }
     },
 
@@ -147,114 +147,102 @@ const CoverageAPI = {
     // COVERAGE-SPECIFIC METHODS
     // ========================================
 
-    // Improve test coverage for a specific file
+    // Improve test coverage for a specific package
     async improveTestCoverage(fileInfo, onProgress) {
         const { repo } = this.config;
-        console.log(`Starting test coverage improvement for "${fileInfo.path}"`);
+        const packagePath = fileInfo.name || fileInfo.path;  // e.g., "internal/pkg/grpc"
+        const packageName = fileInfo.package || packagePath.split('/').pop();  // e.g., "grpc"
 
-        const scopeNote = fileInfo.scope === 'tests-refactor'
-            ? 'You may refactor code minimally for testability if needed.'
-            : 'Write tests only - do not modify source code.';
+        console.log(`Starting test coverage improvement for "${packagePath}"`);
 
         const prompt = `
-REPOSITORY CONTEXT:
-- GitHub Repo: ${repo.url}
-- Clone: git clone ${repo.url}.git
+## TASK: Improve test coverage for Go package "${packagePath}"
+
+## REPOSITORY
+- URL: ${repo.url}
 - Branch: ${repo.branch}
-- Target Repo: Experian/mittens (via subtree in vendor/experian/)
-- Area/Package: ${fileInfo.package || fileInfo.path}
+- Go code location: ${repo.goRoot}/
 
-TASK: Improve test coverage for ${fileInfo.path}
+## CURRENT COVERAGE
+- Package: ${packagePath}
+- Statement Coverage: ${fileInfo.statements}%
+- Function Coverage: ${fileInfo.functions}%
+- Target: 80%+
 
-SCOPE: ${scopeNote}
+## COMMANDS TO RUN
+All Go commands must run from the ${repo.goRoot}/ directory:
 
-CURRENT STATE:
-- File: ${fileInfo.path}
-- Current Statement Coverage: ${fileInfo.statements || fileInfo.currentCoverage}%
-- Current Function Coverage: ${fileInfo.functions || 'N/A'}%
-- Target Coverage: ${fileInfo.targetCoverage || 80}%
-- Package: ${fileInfo.package || 'unknown'}
+\`\`\`bash
+git clone ${repo.url}.git
+cd experian_test_coverage_project
+cd ${repo.goRoot}
+go test -cover ./${packagePath}/...
+go test -coverprofile=coverage.out ./${packagePath}/...
+go tool cover -func=coverage.out
+\`\`\`
 
-FUNCTIONS NEEDING TESTS:
-${fileInfo.untestedFunctions ? fileInfo.untestedFunctions.map(f => `- ${f.name}`).join('\n') : 'Run go tool cover -func to identify untested functions'}
+## STEPS
 
-CRITICAL INSTRUCTIONS:
-1. Run \`go test -coverprofile=coverage.out ./...\` to compute current coverage
-2. Run \`go tool cover -func=coverage.out\` to see per-function coverage
-3. Add tests to improve statement coverage toward ${fileInfo.targetCoverage || 80}%
-4. Re-run tests until coverage >= ${fileInfo.targetCoverage || 80}% (or best effort)
-5. Open a PR with the test improvements
+**Step 1: Clone & Setup**
+\`\`\`bash
+git clone ${repo.url}.git
+cd experian_test_coverage_project
+git checkout ${repo.branch}
+cd ${repo.goRoot}
+\`\`\`
+Send: "Step 1 complete: Cloned repo and checked out ${repo.branch}"
 
-STRUCTURED OUTPUT SCHEMA (REQUIRED):
-You MUST update this structured output immediately after EACH test run:
+**Step 2: Check Current Coverage**
+\`\`\`bash
+go test -coverprofile=coverage.out ./${packagePath}/...
+go tool cover -func=coverage.out
+\`\`\`
+Update structured output with current coverage.
+Send: "Step 2 complete: Current coverage is [X]%"
+
+**Step 3: Identify Untested Code**
+Review output from \`go tool cover -func\` to find functions with 0% coverage.
+Send: "Step 3 complete: Found [N] functions needing tests"
+
+**Step 4: Write Tests**
+- Find existing test file (e.g., \`${packagePath}/*_test.go\`)
+- Add new test cases following existing patterns
+- Focus on functions with 0% coverage
+Send: "Step 4 complete: Wrote tests for [N] functions"
+
+**Step 5: Verify Tests Pass**
+\`\`\`bash
+go test -coverprofile=coverage.out ./${packagePath}/...
+go tool cover -func=coverage.out
+\`\`\`
+Update structured output with new coverage.
+Send: "Step 5 complete: Coverage now [X]%"
+
+**Step 6: Commit Changes**
+\`\`\`bash
+git checkout -b coverage-${packageName}
+git add .
+git commit -m "Improve test coverage for ${packagePath}"
+\`\`\`
+Send: "Step 6 complete: Committed changes"
+
+**Step 7: Create Pull Request**
+\`\`\`bash
+git push -u origin coverage-${packageName}
+gh pr create --title "Improve test coverage for ${packagePath}" --body "Improves test coverage for ${packagePath} package."
+\`\`\`
+Send: "Step 7 complete: Created PR #[number]"
+
+## STRUCTURED OUTPUT (REQUIRED)
+Update after EVERY test run:
 {
-  "tests_passed": 0,
-  "tests_failed": 0,
-  "failing_tests": [],
-  "statement_coverage": 0,
-  "function_coverage": 0
+  "statement_coverage": [current statement %],
+  "function_coverage": [current function %],
+  "tests_passed": [number],
+  "tests_failed": [number],
+  "pr_number": [PR number when created]
 }
-
-Please update the structured output immediately after each test run and whenever coverage changes.
-
-PROGRESS TRACKING:
-Send a message after completing each step:
-
-1. Clone Repository
-   - Clone ${repo.url}
-   - Checkout branch: ${repo.branch}
-   Send: "Step 1 complete: Cloned repo"
-
-2. Analyze & Run Initial Tests
-   - Run: make test or go test -cover ./...
-   - Record initial coverage
-   - UPDATE STRUCTURED OUTPUT with test results
-   Send: "Step 2 complete: Initial coverage [X]%"
-
-3. Identify Untested Functions
-   - Analyze ${fileInfo.path}
-   - List functions needing tests
-   Send: "Step 3 complete: Found [N] functions needing tests"
-
-4. Write Tests
-   - Create/update test file
-   - Follow existing patterns
-   Send: "Step 4 complete: Wrote tests for [N] functions"
-
-5. Run Tests & Verify
-   - Run: make test or go test -cover ./...
-   - UPDATE STRUCTURED OUTPUT with new results
-   - Iterate if coverage < ${fileInfo.targetCoverage || 80}%
-   Send: "Step 5 complete: Coverage now [X]%"
-
-6. Create Branch & Commit
-   - Branch: coverage-${fileInfo.package || 'improvement'}
-   - Commit with coverage improvement message
-   Send: "Step 6 complete: Committed changes"
-
-7. Create Pull Request
-   - Base: ${repo.branch}
-   - Title: "Improve test coverage for ${fileInfo.path}"
-   Send: "Step 7 complete: Created PR #[number]"
-
-8. Finalize
-   - UPDATE STRUCTURED OUTPUT with final values
-   Send: "Step 8 complete: Coverage improved from ${fileInfo.currentCoverage}% to [X]%"
-
-FINAL STRUCTURED OUTPUT (include in last message):
-{
-  "pr_number": [PR number],
-  "tests_passed": [total passing],
-  "tests_failed": [total failing],
-  "failing_tests": [list of failing test names if any],
-  "statement_coverage": [final statement coverage %],
-  "function_coverage": [final function coverage %],
-  "old_statement_coverage": ${fileInfo.statements || fileInfo.currentCoverage},
-  "old_function_coverage": ${fileInfo.functions || 0},
-  "new_statement_coverage": [final statement coverage],
-  "new_function_coverage": [final function coverage]
-}
-        `.trim();
+`.trim();
 
         const session = await this.createSession({ prompt });
         console.log(`✓ Devin session created: ${session.url}`);
@@ -278,204 +266,88 @@ FINAL STRUCTURED OUTPUT (include in last message):
         } : null;
 
         const finalStatus = await this.pollSessionStatus(session.sessionId, onProgressWithUrl);
-        const structuredOutput = finalStatus.structured_output || {};
+        const output = finalStatus.structured_output || {};
 
         return {
             sessionId: session.sessionId,
             url: session.url,
-            prNumber: structuredOutput.pr_number || finalStatus.pull_request || 'N/A',
-            filePath: fileInfo.path,
-            oldCoverage: fileInfo.currentCoverage,
-            newCoverage: structuredOutput.new_coverage || 'pending',
-            testsAdded: structuredOutput.tests_added || 0,
-            branch: structuredOutput.branch_name || `coverage-${fileInfo.path.replace(/\//g, '-').replace('.go', '')}`,
+            prNumber: output.pr_number || 'N/A',
+            filePath: packagePath,
+            oldStatementCoverage: fileInfo.statements,
+            oldFunctionCoverage: fileInfo.functions,
+            newStatementCoverage: output.statement_coverage || null,
+            newFunctionCoverage: output.function_coverage || null,
+            testsPassed: output.tests_passed || 0,
+            testsFailed: output.tests_failed || 0,
             status: finalStatus.status_enum,
             messages: finalStatus.messages || []
         };
     },
 
-    // Batch improve coverage for multiple files
-    async batchImproveCoverage(files, onProgress) {
-        const { repo } = this.config;
-        const fileList = files.map(f => `- ${f.path}: ${f.currentCoverage}%`).join('\n');
-
-        console.log(`Starting batch coverage improvement for ${files.length} files`);
-
-        const prompt = `
-REPOSITORY CONTEXT:
-- GitHub Repo: ${repo.url}
-- Clone: git clone ${repo.url}.git
-- Branch: ${repo.branch}
-
-TASK: Improve test coverage for multiple files in vendor/experian/
-
-FILES TO IMPROVE:
-${fileList}
-
-PRIORITY: Focus on files with lowest coverage first.
-
-CRITICAL PROGRESS TRACKING:
-Send a message after completing tests for EACH file.
-
-Task Steps:
-
-1. Clone and Setup
-   - Clone ${repo.url}
-   - Checkout ${repo.branch}
-   - Run initial coverage: go test -cover ./...
-   Send: "Step 1 complete: Setup done, initial coverage: [X]%"
-
-2-${files.length + 1}. For each file:
-   - Write tests
-   - Verify they pass
-   Send: "File [N] complete: ${'{filename}'} now at [X]% coverage"
-
-${files.length + 2}. Create Single PR
-   - Branch: batch-coverage-improvement
-   - Commit all test files
-   - PR to ${repo.branch}
-   Send: "PR created: #[number] - Coverage improved across ${files.length} files"
-
-STRUCTURED OUTPUT:
-{
-  "pr_number": [PR number],
-  "files_improved": ${files.length},
-  "coverage_before": [total before],
-  "coverage_after": [total after]
-}
-        `.trim();
-
-        const session = await this.createSession({ prompt });
-
-        if (onProgress) {
-            onProgress({
-                session_created: true,
-                session_id: session.sessionId,
-                url: session.url,
-                status_enum: 'initializing',
-                messages: []
-            });
-        }
-
-        const finalStatus = await this.pollSessionStatus(session.sessionId, onProgress);
-        return {
-            sessionId: session.sessionId,
-            url: session.url,
-            prNumber: finalStatus.structured_output?.pr_number || 'N/A',
-            filesImproved: files.length,
-            status: finalStatus.status_enum
-        };
-    },
-
-    // Run all tests via Devin session
-    async runAllTests(onProgress) {
-        const { repo } = this.config;
-        console.log('Starting Devin session to run all tests');
-
-        const prompt = `
-REPOSITORY CONTEXT:
-- GitHub Repo: ${repo.url}
-- Clone: git clone ${repo.url}.git
-- Branch: ${repo.branch}
-- Target: vendor/experian/ (Experian/mittens subtree)
-
-TASK: Run all tests and report results
-
-INSTRUCTIONS:
-1. Clone the repository
-2. Navigate to vendor/experian/
-3. Run: make test OR go test -v ./...
-4. Report all test results
-
-STRUCTURED OUTPUT SCHEMA (REQUIRED):
-Update this structured output immediately after each test run:
-{
-  "tests_passed": 0,
-  "tests_failed": 0,
-  "failing_tests": [],
-  "coverage": 0
-}
-
-Please update the structured output immediately after each test run and whenever coverage changes.
-
-PROGRESS:
-1. Clone Repository → Send: "Step 1 complete: Cloned repo"
-2. Run Tests → Send: "Step 2 complete: Running tests..."
-3. Report Results → Send: "Step 3 complete: [X] passed, [Y] failed"
-4. Finalize → Send: "Step 4 complete: Test run finished"
-
-NO PR REQUIRED - just run tests and report results.
-        `.trim();
-
-        const session = await this.createSession({ prompt });
-        console.log(`✓ Devin session created: ${session.url}`);
-
-        if (onProgress) {
-            onProgress({
-                session_created: true,
-                session_id: session.sessionId,
-                url: session.url,
-                status_enum: 'initializing',
-                messages: []
-            });
-        }
-
-        const finalStatus = await this.pollSessionStatus(session.sessionId, onProgress);
-        return {
-            sessionId: session.sessionId,
-            url: session.url,
-            testsPassed: finalStatus.structured_output?.tests_passed || 0,
-            testsFailed: finalStatus.structured_output?.tests_failed || 0,
-            failingTests: finalStatus.structured_output?.failing_tests || [],
-            coverage: finalStatus.structured_output?.coverage || 0,
-            status: finalStatus.status_enum
-        };
-    },
-
-    // Run coverage scan via Devin session
+    // Run coverage scan - reports current coverage without making changes
     async runCoverageScan(onProgress) {
         const { repo } = this.config;
         console.log('Starting Devin session to scan coverage');
 
         const prompt = `
-REPOSITORY CONTEXT:
-- GitHub Repo: ${repo.url}
-- Clone: git clone ${repo.url}.git
+## TASK: Run coverage scan and report results
+
+## REPOSITORY
+- URL: ${repo.url}
 - Branch: ${repo.branch}
-- Target: vendor/experian/ (Experian/mittens subtree)
+- Go code location: ${repo.goRoot}/
 
-TASK: Run coverage scan and report detailed results
+## COMMANDS
+All commands must run from the ${repo.goRoot}/ directory:
 
-INSTRUCTIONS:
-1. Clone the repository
-2. Navigate to vendor/experian/
-3. Run: go test -cover ./...
-4. Run: go test -coverprofile=coverage.out ./...
-5. Run: go tool cover -func=coverage.out
-6. Parse and report coverage by package
+\`\`\`bash
+git clone ${repo.url}.git
+cd experian_test_coverage_project
+git checkout ${repo.branch}
+cd ${repo.goRoot}
+go test -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out
+\`\`\`
 
-STRUCTURED OUTPUT SCHEMA (REQUIRED):
-Update this structured output with coverage data:
+## STEPS
+
+**Step 1: Clone & Setup**
+\`\`\`bash
+git clone ${repo.url}.git
+cd experian_test_coverage_project
+git checkout ${repo.branch}
+cd ${repo.goRoot}
+\`\`\`
+Send: "Step 1 complete: Cloned repo"
+
+**Step 2: Run Tests with Coverage**
+\`\`\`bash
+go test -coverprofile=coverage.out ./...
+\`\`\`
+Send: "Step 2 complete: Tests finished"
+
+**Step 3: Get Coverage Report**
+\`\`\`bash
+go tool cover -func=coverage.out
+\`\`\`
+Parse the output and update structured output.
+Send: "Step 3 complete: Total coverage is [X]%"
+
+## STRUCTURED OUTPUT (REQUIRED)
+Update after the coverage scan:
 {
-  "tests_passed": 0,
-  "tests_failed": 0,
-  "failing_tests": [],
-  "coverage": 0,
+  "statement_coverage": [total statement coverage %],
+  "tests_passed": [number of passing tests],
+  "tests_failed": [number of failing tests],
   "packages": [
-    {"name": "package_name", "coverage": 0}
+    {"name": "internal/pkg/safe", "statement_coverage": 100},
+    {"name": "internal/pkg/http", "statement_coverage": 81.9}
   ]
 }
 
-Please update the structured output immediately after the coverage scan completes.
-
-PROGRESS:
-1. Clone Repository → Send: "Step 1 complete: Cloned repo"
-2. Run Coverage → Send: "Step 2 complete: Running coverage scan..."
-3. Parse Results → Send: "Step 3 complete: Coverage is [X]%"
-4. Finalize → Send: "Step 4 complete: Coverage scan finished"
-
-NO PR REQUIRED - just scan coverage and report results.
-        `.trim();
+## NO PR REQUIRED
+This is a read-only coverage scan.
+`.trim();
 
         const session = await this.createSession({ prompt });
         console.log(`✓ Devin session created: ${session.url}`);
@@ -491,11 +363,85 @@ NO PR REQUIRED - just scan coverage and report results.
         }
 
         const finalStatus = await this.pollSessionStatus(session.sessionId, onProgress);
+        const output = finalStatus.structured_output || {};
+
         return {
             sessionId: session.sessionId,
             url: session.url,
-            coverage: finalStatus.structured_output?.coverage || 0,
-            packages: finalStatus.structured_output?.packages || [],
+            statementCoverage: output.statement_coverage || 0,
+            testsPassed: output.tests_passed || 0,
+            testsFailed: output.tests_failed || 0,
+            packages: output.packages || [],
+            status: finalStatus.status_enum
+        };
+    },
+
+    // Run all tests without coverage (faster)
+    async runAllTests(onProgress) {
+        const { repo } = this.config;
+        console.log('Starting Devin session to run all tests');
+
+        const prompt = `
+## TASK: Run all tests and report results
+
+## REPOSITORY
+- URL: ${repo.url}
+- Branch: ${repo.branch}
+- Go code location: ${repo.goRoot}/
+
+## COMMANDS
+\`\`\`bash
+git clone ${repo.url}.git
+cd experian_test_coverage_project
+git checkout ${repo.branch}
+cd ${repo.goRoot}
+go test -v ./...
+\`\`\`
+
+## STEPS
+
+**Step 1: Clone & Setup**
+Send: "Step 1 complete: Cloned repo"
+
+**Step 2: Run Tests**
+\`\`\`bash
+cd ${repo.goRoot}
+go test -v ./...
+\`\`\`
+Send: "Step 2 complete: [X] passed, [Y] failed"
+
+## STRUCTURED OUTPUT (REQUIRED)
+{
+  "tests_passed": [number],
+  "tests_failed": [number],
+  "failing_tests": ["test name 1", "test name 2"]
+}
+
+## NO PR REQUIRED
+`.trim();
+
+        const session = await this.createSession({ prompt });
+        console.log(`✓ Devin session created: ${session.url}`);
+
+        if (onProgress) {
+            onProgress({
+                session_created: true,
+                session_id: session.sessionId,
+                url: session.url,
+                status_enum: 'initializing',
+                messages: []
+            });
+        }
+
+        const finalStatus = await this.pollSessionStatus(session.sessionId, onProgress);
+        const output = finalStatus.structured_output || {};
+
+        return {
+            sessionId: session.sessionId,
+            url: session.url,
+            testsPassed: output.tests_passed || 0,
+            testsFailed: output.tests_failed || 0,
+            failingTests: output.failing_tests || [],
             status: finalStatus.status_enum
         };
     }

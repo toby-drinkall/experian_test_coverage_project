@@ -2926,13 +2926,13 @@
 
             // Coverage data state (overrides to base coverageData)
             const [coverageUpdates, setCoverageUpdates] = useState(() => {
-                const stored = localStorage.getItem('coverage_updates_v1');
+                const stored = localStorage.getItem('coverage_updates_v3');
                 return stored ? JSON.parse(stored) : {};
             });
 
             // Save coverage updates to localStorage
             useEffect(() => {
-                localStorage.setItem('coverage_updates_v1', JSON.stringify(coverageUpdates));
+                localStorage.setItem('coverage_updates_v3', JSON.stringify(coverageUpdates));
             }, [coverageUpdates]);
 
             // Get current coverage data (base + updates)
@@ -3033,7 +3033,7 @@
                 }
             ];
             const [runHistory, setRunHistory] = useState(() => {
-                const stored = localStorage.getItem('run_history_v2');
+                const stored = localStorage.getItem('run_history_v3');
                 if (stored) {
                     const parsed = JSON.parse(stored);
                     // Ensure baseline runs are always included at the end
@@ -3043,16 +3043,16 @@
                 return baselineRuns;
             });
             const [runCounter, setRunCounter] = useState(() => {
-                const stored = localStorage.getItem('run_counter_v2');
+                const stored = localStorage.getItem('run_counter_v3');
                 return stored ? parseInt(stored) : 2;
             });
 
             // Persist run history and counter to localStorage
             useEffect(() => {
-                localStorage.setItem('run_history_v2', JSON.stringify(runHistory));
+                localStorage.setItem('run_history_v3', JSON.stringify(runHistory));
             }, [runHistory]);
             useEffect(() => {
-                localStorage.setItem('run_counter_v2', runCounter.toString());
+                localStorage.setItem('run_counter_v3', runCounter.toString());
             }, [runCounter]);
 
             // Create a new run entry (only called on successful completion)

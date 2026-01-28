@@ -633,11 +633,11 @@
                 id: 'cmd-flags',
                 name: 'cmd/flags',
                 package: 'flags',
-                statements: 97.9,
-                functions: 100,
+                statements: 13.8,
+                functions: 5.1,
                 statementCount: 188,
                 functionCount: 39,
-                status: 'good',
+                status: 'needs-work',
                 testFile: 'http_test.go',
                 description: 'Defines all CLI flags for configuring warmup behavior, timeouts, concurrency, and targets.'
             }
@@ -3006,24 +3006,6 @@
             // Run History - persisted to localStorage, with baseline runs as defaults
             const baselineRuns = [
                 {
-                    id: 'run-3',
-                    run_number: 3,
-                    timestamp: '2026-01-28T16:04:58.000Z',
-                    package_name: 'cmd/flags',
-                    run_type: 'Improve',
-                    baseline_statements: 13.8,
-                    baseline_functions: 5.1,
-                    final_statements: 97.9,
-                    final_functions: 100,
-                    statements_delta: 84.1,
-                    functions_delta: 94.9,
-                    tests_passed: 39,
-                    tests_failed: 0,
-                    pr_number: 2,
-                    pr_url: 'https://github.com/toby-drinkall/experian_test_coverage_project/pull/2',
-                    status: 'Merged'
-                },
-                {
                     id: 'run-2',
                     run_number: 2,
                     timestamp: '2026-01-28T07:36:00.000Z',
@@ -3062,7 +3044,7 @@
             });
             const [runCounter, setRunCounter] = useState(() => {
                 const stored = localStorage.getItem('run_counter_v2');
-                return stored ? parseInt(stored) : 3;
+                return stored ? parseInt(stored) : 2;
             });
 
             // Persist run history and counter to localStorage

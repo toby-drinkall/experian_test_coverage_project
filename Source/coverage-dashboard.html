@@ -543,14 +543,44 @@
         // ============================================
         const coverageData = [
             {
-                id: 'calculator',
-                name: 'calculator.ts',
-                statements: 36.36,
-                functions: 33.33,
-                lines: 36.36,
+                id: 'crypto',
+                name: 'crypto.ts',
+                statements: 88.46,
+                functions: 57.14,
+                lines: 87.5,
+                status: 'good',
+                testFile: 'crypto.test.ts',
+                description: 'Cryptography utilities: generateId, generateUUID, hashCode, base64 encoding.'
+            },
+            {
+                id: 'dateUtils',
+                name: 'dateUtils.ts',
+                statements: 66.66,
+                functions: 28.57,
+                lines: 66.66,
                 status: 'needs-work',
-                testFile: 'calculator.test.ts',
-                description: 'Basic arithmetic operations: add, subtract, multiply, divide, power, factorial.'
+                testFile: 'dateUtils.test.ts',
+                description: 'Date manipulation: formatDate, addDays, daysBetween, isWeekend, getQuarter.'
+            },
+            {
+                id: 'numberUtils',
+                name: 'numberUtils.ts',
+                statements: 50,
+                functions: 30,
+                lines: 60,
+                status: 'needs-work',
+                testFile: 'numberUtils.test.ts',
+                description: 'Number utilities: clamp, round, random, percentage, average, median, sum.'
+            },
+            {
+                id: 'objectUtils',
+                name: 'objectUtils.ts',
+                statements: 48,
+                functions: 37.5,
+                lines: 50,
+                status: 'needs-work',
+                testFile: 'objectUtils.test.ts',
+                description: 'Object manipulation: pick, omit, deepClone, isEmpty, merge, get.'
             },
             {
                 id: 'stringUtils',
@@ -561,6 +591,76 @@
                 status: 'needs-work',
                 testFile: 'stringUtils.test.ts',
                 description: 'String utilities: capitalize, reverse, isPalindrome, truncate, countWords, slugify.'
+            },
+            {
+                id: 'arrayUtils',
+                name: 'arrayUtils.ts',
+                statements: 38.7,
+                functions: 22.22,
+                lines: 42.3,
+                status: 'needs-work',
+                testFile: 'arrayUtils.test.ts',
+                description: 'Array manipulation: chunk, unique, shuffle, flatten, groupBy, sortBy.'
+            },
+            {
+                id: 'validation',
+                name: 'validation.ts',
+                statements: 37.5,
+                functions: 33.33,
+                lines: 41.37,
+                status: 'needs-work',
+                testFile: 'validation.test.ts',
+                description: 'Input validation: isEmail, isURL, isPhoneNumber, isPostalCode, isStrongPassword.'
+            },
+            {
+                id: 'calculator',
+                name: 'calculator.ts',
+                statements: 36.36,
+                functions: 33.33,
+                lines: 36.36,
+                status: 'needs-work',
+                testFile: 'calculator.test.ts',
+                description: 'Basic arithmetic: add, subtract, multiply, divide, power, factorial.'
+            },
+            {
+                id: 'async',
+                name: 'async.ts',
+                statements: 34.48,
+                functions: 41.66,
+                lines: 33.33,
+                status: 'needs-work',
+                testFile: 'async.test.ts',
+                description: 'Async utilities: sleep, timeout, retry, debounce, throttle.'
+            },
+            {
+                id: 'formatters',
+                name: 'formatters.ts',
+                statements: 28.57,
+                functions: 33.33,
+                lines: 30.76,
+                status: 'needs-work',
+                testFile: 'formatters.test.ts',
+                description: 'Data formatting: formatCurrency, formatNumber, formatPercentage, formatFileSize.'
+            },
+            {
+                id: 'dom',
+                name: 'dom.ts',
+                statements: 0,
+                functions: 0,
+                lines: 0,
+                status: 'none',
+                testFile: null,
+                description: 'DOM utilities: createElement, addClass, removeClass, toggleClass, scrollToTop.'
+            },
+            {
+                id: 'storage',
+                name: 'storage.ts',
+                statements: 0,
+                functions: 0,
+                lines: 0,
+                status: 'none',
+                testFile: null,
+                description: 'Browser storage: setItem, getItem, removeItem, clear, setWithExpiry.'
             }
         ];
 

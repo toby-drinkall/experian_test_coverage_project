@@ -170,26 +170,29 @@ SCOPE: ${scopeNote}
 
 CURRENT STATE:
 - File: ${fileInfo.path}
-- Current Coverage: ${fileInfo.currentCoverage}%
+- Current Statement Coverage: ${fileInfo.statements || fileInfo.currentCoverage}%
+- Current Function Coverage: ${fileInfo.functions || 'N/A'}%
 - Target Coverage: ${fileInfo.targetCoverage || 80}%
 - Package: ${fileInfo.package || 'unknown'}
 
 FUNCTIONS NEEDING TESTS:
-${fileInfo.functions ? fileInfo.functions.map(f => `- ${f.name}: ${f.coverage}% coverage`).join('\n') : 'See file for functions'}
+${fileInfo.untestedFunctions ? fileInfo.untestedFunctions.map(f => `- ${f.name}`).join('\n') : 'Run go tool cover -func to identify untested functions'}
 
 CRITICAL INSTRUCTIONS:
-1. Run \`make test\` or \`go test -cover ./...\` to compute current coverage
-2. Add tests to improve coverage toward ${fileInfo.targetCoverage || 80}%
-3. Re-run tests until coverage >= ${fileInfo.targetCoverage || 80}% (or best effort if N/A)
-4. Open a PR with the test improvements
+1. Run \`go test -coverprofile=coverage.out ./...\` to compute current coverage
+2. Run \`go tool cover -func=coverage.out\` to see per-function coverage
+3. Add tests to improve statement coverage toward ${fileInfo.targetCoverage || 80}%
+4. Re-run tests until coverage >= ${fileInfo.targetCoverage || 80}% (or best effort)
+5. Open a PR with the test improvements
 
 STRUCTURED OUTPUT SCHEMA (REQUIRED):
-You MUST update this structured output immediately after EACH test run and whenever coverage changes:
+You MUST update this structured output immediately after EACH test run:
 {
   "tests_passed": 0,
   "tests_failed": 0,
   "failing_tests": [],
-  "coverage": 0
+  "statement_coverage": 0,
+  "function_coverage": 0
 }
 
 Please update the structured output immediately after each test run and whenever coverage changes.
@@ -244,9 +247,12 @@ FINAL STRUCTURED OUTPUT (include in last message):
   "tests_passed": [total passing],
   "tests_failed": [total failing],
   "failing_tests": [list of failing test names if any],
-  "coverage": [final coverage percentage],
-  "old_coverage": ${fileInfo.currentCoverage},
-  "new_coverage": [final coverage]
+  "statement_coverage": [final statement coverage %],
+  "function_coverage": [final function coverage %],
+  "old_statement_coverage": ${fileInfo.statements || fileInfo.currentCoverage},
+  "old_function_coverage": ${fileInfo.functions || 0},
+  "new_statement_coverage": [final statement coverage],
+  "new_function_coverage": [final function coverage]
 }
         `.trim();
 

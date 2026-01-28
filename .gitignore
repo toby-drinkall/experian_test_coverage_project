@@ -1,20 +1,25 @@
-Distribution
-Distribution/**
-
-# Jest coverage output
-coverage/
-Source/**/*.md
-Source/**/*.txt
+# Dependencies
 node_modules/
 npm-debug.log
-
-# Devin API credentials - DO NOT COMMIT
-Source/devin-api-config.js
-Source/dashboard-config.js
 
 # Environment variables (contains API keys)
 .env
 .env.local
 
-# Root dashboard file (served from Source/ by dev-server)
-/cognition-dashboard-premium.html
+# Go coverage output (generated)
+*.out
+coverage.out
+vendor/experian/coverage.out
+
+# Coverage reports
+coverage/
+
+# Build artifacts
+Distribution/
+Distribution/**
+
+# Editor/IDE
+.idea/
+.vscode/
+*.swp
+*.swo

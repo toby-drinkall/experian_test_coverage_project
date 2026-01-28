@@ -2926,13 +2926,13 @@
 
             // Coverage data state (overrides to base coverageData)
             const [coverageUpdates, setCoverageUpdates] = useState(() => {
-                const stored = localStorage.getItem('coverage_updates_v3');
+                const stored = localStorage.getItem('coverage_updates_v4');
                 return stored ? JSON.parse(stored) : {};
             });
 
             // Save coverage updates to localStorage
             useEffect(() => {
-                localStorage.setItem('coverage_updates_v3', JSON.stringify(coverageUpdates));
+                localStorage.setItem('coverage_updates_v4', JSON.stringify(coverageUpdates));
             }, [coverageUpdates]);
 
             // Get current coverage data (base + updates)
@@ -3033,7 +3033,7 @@
                 }
             ];
             const [runHistory, setRunHistory] = useState(() => {
-                const stored = localStorage.getItem('run_history_v3');
+                const stored = localStorage.getItem('run_history_v4');
                 if (stored) {
                     const parsed = JSON.parse(stored);
                     // Ensure baseline runs are always included at the end
@@ -3043,16 +3043,16 @@
                 return baselineRuns;
             });
             const [runCounter, setRunCounter] = useState(() => {
-                const stored = localStorage.getItem('run_counter_v3');
+                const stored = localStorage.getItem('run_counter_v4');
                 return stored ? parseInt(stored) : 2;
             });
 
             // Persist run history and counter to localStorage
             useEffect(() => {
-                localStorage.setItem('run_history_v3', JSON.stringify(runHistory));
+                localStorage.setItem('run_history_v4', JSON.stringify(runHistory));
             }, [runHistory]);
             useEffect(() => {
-                localStorage.setItem('run_counter_v3', runCounter.toString());
+                localStorage.setItem('run_counter_v4', runCounter.toString());
             }, [runCounter]);
 
             // Create a new run entry (only called on successful completion)
@@ -3616,70 +3616,6 @@
                             }
                         }
                     });
-
-                    // Detect and import coverage PRs created outside the dashboard
-                    // Pattern: "test(package): improve coverage from X% to Y%"
-                    const coveragePrPattern = /^test\(([^)]+)\):\s*improve coverage from ([\d.]+)% to ([\d.]+)%$/i;
-                    let newRunsImported = 0;
-                    prs.forEach(pr => {
-                        const match = pr.title.match(coveragePrPattern);
-                        if (match && pr.merged_at) {
-                            const packageName = match[1]; // e.g., "flags"
-                            const baselinePct = parseFloat(match[2]);
-                            const finalPct = parseFloat(match[3]);
-
-                            // Check if we already have a run for this PR
-                            const existingRun = runHistory.find(r => r.pr_number === pr.number);
-                            if (!existingRun) {
-                                // Find the package by name or id
-                                const pkg = getCurrentCoverageData().find(p =>
-                                    p.package === packageName ||
-                                    p.id === packageName ||
-                                    p.name.endsWith('/' + packageName)
-                                );
-
-                                if (pkg) {
-                                    console.log(`🔍 Discovered merged coverage PR #${pr.number}: ${pr.title}`);
-
-                                    // Create a new run entry for this PR
-                                    const newRunNumber = runCounter + newRunsImported + 1;
-                                    const newRun = {
-                                        id: `imported-pr-${pr.number}`,
-                                        run_number: newRunNumber,
-                                        timestamp: pr.merged_at,
-                                        package_name: pkg.name,
-                                        run_type: 'Improve',
-                                        baseline_statements: baselinePct,
-                                        final_statements: finalPct,
-                                        statements_delta: parseFloat((finalPct - baselinePct).toFixed(1)),
-                                        pr_number: pr.number,
-                                        pr_url: pr.html_url,
-                                        status: 'Merged'
-                                    };
-
-                                    // Add to run history
-                                    setRunHistory(prev => [newRun, ...prev].slice(0, 20));
-                                    newRunsImported++;
-
-                                    // Update the package coverage if not already updated
-                                    if (pkg.statements < finalPct) {
-                                        updatePackageCoverage(pkg.id, finalPct, null);
-                                        console.log(`📊 Updated coverage for ${pkg.id} to ${finalPct}%`);
-                                        packagesUpdated.push({
-                                            name: pkg.name,
-                                            oldCoverage: pkg.statements,
-                                            newCoverage: finalPct
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    });
-
-                    if (newRunsImported > 0) {
-                        setRunCounter(prev => prev + newRunsImported);
-                        console.log(`📥 Imported ${newRunsImported} coverage PR(s) from GitHub`);
-                    }
 
                     // Show sync success message
                     const pendingRuns = runHistory.filter(r => r.status === 'Pending Merge').length - runsUpdated;

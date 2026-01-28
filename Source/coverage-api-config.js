@@ -152,36 +152,102 @@ const CoverageAPI = {
         const { repo } = this.config;
         console.log(`Starting test coverage improvement for "${fileInfo.path}"`);
 
+        const scopeNote = fileInfo.scope === 'tests-refactor'
+            ? 'You may refactor code minimally for testability if needed.'
+            : 'Write tests only - do not modify source code.';
+
         const prompt = `
-You are improving test coverage for a Go project.
+REPOSITORY CONTEXT:
+- GitHub Repo: ${repo.url}
+- Clone: git clone ${repo.url}.git
+- Branch: ${repo.branch}
+- Target Repo: Experian/mittens (via subtree in vendor/experian/)
+- Area/Package: ${fileInfo.package || fileInfo.path}
 
-REPOSITORY: ${repo.url}
-BRANCH: ${repo.branch}
+TASK: Improve test coverage for ${fileInfo.path}
 
-TASK: Increase test coverage for the "${fileInfo.package}" package from ${fileInfo.currentCoverage}% toward 80%.
+SCOPE: ${scopeNote}
 
-STEPS:
-1. Clone the repo and checkout branch "${repo.branch}"
-2. Navigate to vendor/experian/ (this is where the Go code lives)
-3. Run "go test -cover ./..." to establish baseline coverage
-4. Analyze the ${fileInfo.package} package to find untested functions
-5. Write new tests following the existing test patterns in the codebase
-6. Run tests again to verify they pass and coverage improved
-7. Create a new branch "coverage-${fileInfo.package}"
-8. Commit your changes with message "Improve test coverage for ${fileInfo.package}"
-9. Push and create a PR to "${repo.branch}"
+CURRENT STATE:
+- File: ${fileInfo.path}
+- Current Coverage: ${fileInfo.currentCoverage}%
+- Target Coverage: ${fileInfo.targetCoverage || 80}%
+- Package: ${fileInfo.package || 'unknown'}
 
-IMPORTANT:
-- All Go code is in vendor/experian/ directory
-- Follow existing test patterns in the codebase
-- Make sure all tests pass before creating PR
-- Only add tests - do not modify source code
+FUNCTIONS NEEDING TESTS:
+${fileInfo.functions ? fileInfo.functions.map(f => `- ${f.name}: ${f.coverage}% coverage`).join('\n') : 'See file for functions'}
 
-When done, report:
-- PR number created
-- Old coverage percentage
-- New coverage percentage
-- Number of tests added
+CRITICAL INSTRUCTIONS:
+1. Run \`make test\` or \`go test -cover ./...\` to compute current coverage
+2. Add tests to improve coverage toward ${fileInfo.targetCoverage || 80}%
+3. Re-run tests until coverage >= ${fileInfo.targetCoverage || 80}% (or best effort if N/A)
+4. Open a PR with the test improvements
+
+STRUCTURED OUTPUT SCHEMA (REQUIRED):
+You MUST update this structured output immediately after EACH test run and whenever coverage changes:
+{
+  "tests_passed": 0,
+  "tests_failed": 0,
+  "failing_tests": [],
+  "coverage": 0
+}
+
+Please update the structured output immediately after each test run and whenever coverage changes.
+
+PROGRESS TRACKING:
+Send a message after completing each step:
+
+1. Clone Repository
+   - Clone ${repo.url}
+   - Checkout branch: ${repo.branch}
+   Send: "Step 1 complete: Cloned repo"
+
+2. Analyze & Run Initial Tests
+   - Run: make test or go test -cover ./...
+   - Record initial coverage
+   - UPDATE STRUCTURED OUTPUT with test results
+   Send: "Step 2 complete: Initial coverage [X]%"
+
+3. Identify Untested Functions
+   - Analyze ${fileInfo.path}
+   - List functions needing tests
+   Send: "Step 3 complete: Found [N] functions needing tests"
+
+4. Write Tests
+   - Create/update test file
+   - Follow existing patterns
+   Send: "Step 4 complete: Wrote tests for [N] functions"
+
+5. Run Tests & Verify
+   - Run: make test or go test -cover ./...
+   - UPDATE STRUCTURED OUTPUT with new results
+   - Iterate if coverage < ${fileInfo.targetCoverage || 80}%
+   Send: "Step 5 complete: Coverage now [X]%"
+
+6. Create Branch & Commit
+   - Branch: coverage-${fileInfo.package || 'improvement'}
+   - Commit with coverage improvement message
+   Send: "Step 6 complete: Committed changes"
+
+7. Create Pull Request
+   - Base: ${repo.branch}
+   - Title: "Improve test coverage for ${fileInfo.path}"
+   Send: "Step 7 complete: Created PR #[number]"
+
+8. Finalize
+   - UPDATE STRUCTURED OUTPUT with final values
+   Send: "Step 8 complete: Coverage improved from ${fileInfo.currentCoverage}% to [X]%"
+
+FINAL STRUCTURED OUTPUT (include in last message):
+{
+  "pr_number": [PR number],
+  "tests_passed": [total passing],
+  "tests_failed": [total failing],
+  "failing_tests": [list of failing test names if any],
+  "coverage": [final coverage percentage],
+  "old_coverage": ${fileInfo.currentCoverage},
+  "new_coverage": [final coverage]
+}
         `.trim();
 
         const session = await this.createSession({ prompt });
@@ -208,25 +274,15 @@ When done, report:
         const finalStatus = await this.pollSessionStatus(session.sessionId, onProgressWithUrl);
         const structuredOutput = finalStatus.structured_output || {};
 
-        // Try to extract PR number from messages if not in structured output
-        let prNumber = structuredOutput.pr_number || finalStatus.pull_request || null;
-        if (!prNumber && finalStatus.messages) {
-            const allMessages = finalStatus.messages.map(m => m.message || '').join(' ');
-            const prMatch = allMessages.match(/PR\s*#?(\d+)|pull\/(\d+)|created.*#(\d+)/i);
-            if (prMatch) {
-                prNumber = prMatch[1] || prMatch[2] || prMatch[3];
-            }
-        }
-
         return {
             sessionId: session.sessionId,
             url: session.url,
-            prNumber: prNumber || 'N/A',
+            prNumber: structuredOutput.pr_number || finalStatus.pull_request || 'N/A',
             filePath: fileInfo.path,
             oldCoverage: fileInfo.currentCoverage,
-            newCoverage: structuredOutput.new_coverage || structuredOutput.coverage || 'pending',
+            newCoverage: structuredOutput.new_coverage || 'pending',
             testsAdded: structuredOutput.tests_added || 0,
-            branch: `coverage-${fileInfo.package}`,
+            branch: structuredOutput.branch_name || `coverage-${fileInfo.path.replace(/\//g, '-').replace('.go', '')}`,
             status: finalStatus.status_enum,
             messages: finalStatus.messages || []
         };
@@ -235,36 +291,52 @@ When done, report:
     // Batch improve coverage for multiple files
     async batchImproveCoverage(files, onProgress) {
         const { repo } = this.config;
-        const fileList = files.map(f => `- ${f.package}: ${f.currentCoverage}%`).join('\n');
+        const fileList = files.map(f => `- ${f.path}: ${f.currentCoverage}%`).join('\n');
 
         console.log(`Starting batch coverage improvement for ${files.length} files`);
 
         const prompt = `
-You are improving test coverage for a Go project.
+REPOSITORY CONTEXT:
+- GitHub Repo: ${repo.url}
+- Clone: git clone ${repo.url}.git
+- Branch: ${repo.branch}
 
-REPOSITORY: ${repo.url}
-BRANCH: ${repo.branch}
+TASK: Improve test coverage for multiple files in vendor/experian/
 
-TASK: Increase test coverage for multiple packages. Focus on lowest coverage first.
-
-PACKAGES TO IMPROVE:
+FILES TO IMPROVE:
 ${fileList}
 
-STEPS:
-1. Clone the repo and checkout "${repo.branch}"
-2. Navigate to vendor/experian/ (Go code location)
-3. Run "go test -cover ./..." to get baseline
-4. For each package, write tests following existing patterns
-5. Verify all tests pass
-6. Create branch "batch-coverage-improvement"
-7. Commit and create single PR to "${repo.branch}"
+PRIORITY: Focus on files with lowest coverage first.
 
-IMPORTANT:
-- All Go code is in vendor/experian/
-- Follow existing test patterns
-- All tests must pass before PR
+CRITICAL PROGRESS TRACKING:
+Send a message after completing tests for EACH file.
 
-When done, report PR number and coverage improvement.
+Task Steps:
+
+1. Clone and Setup
+   - Clone ${repo.url}
+   - Checkout ${repo.branch}
+   - Run initial coverage: go test -cover ./...
+   Send: "Step 1 complete: Setup done, initial coverage: [X]%"
+
+2-${files.length + 1}. For each file:
+   - Write tests
+   - Verify they pass
+   Send: "File [N] complete: ${'{filename}'} now at [X]% coverage"
+
+${files.length + 2}. Create Single PR
+   - Branch: batch-coverage-improvement
+   - Commit all test files
+   - PR to ${repo.branch}
+   Send: "PR created: #[number] - Coverage improved across ${files.length} files"
+
+STRUCTURED OUTPUT:
+{
+  "pr_number": [PR number],
+  "files_improved": ${files.length},
+  "coverage_before": [total before],
+  "coverage_after": [total after]
+}
         `.trim();
 
         const session = await this.createSession({ prompt });
@@ -295,18 +367,36 @@ When done, report PR number and coverage improvement.
         console.log('Starting Devin session to run all tests');
 
         const prompt = `
-You are running tests for a Go project.
+REPOSITORY CONTEXT:
+- GitHub Repo: ${repo.url}
+- Clone: git clone ${repo.url}.git
+- Branch: ${repo.branch}
+- Target: vendor/experian/ (Experian/mittens subtree)
 
-REPOSITORY: ${repo.url}
-BRANCH: ${repo.branch}
+TASK: Run all tests and report results
 
-TASK: Run all tests and report results.
-
-STEPS:
-1. Clone the repo and checkout "${repo.branch}"
+INSTRUCTIONS:
+1. Clone the repository
 2. Navigate to vendor/experian/
-3. Run "go test -v ./..."
-4. Report: number of tests passed, failed, and overall coverage
+3. Run: make test OR go test -v ./...
+4. Report all test results
+
+STRUCTURED OUTPUT SCHEMA (REQUIRED):
+Update this structured output immediately after each test run:
+{
+  "tests_passed": 0,
+  "tests_failed": 0,
+  "failing_tests": [],
+  "coverage": 0
+}
+
+Please update the structured output immediately after each test run and whenever coverage changes.
+
+PROGRESS:
+1. Clone Repository → Send: "Step 1 complete: Cloned repo"
+2. Run Tests → Send: "Step 2 complete: Running tests..."
+3. Report Results → Send: "Step 3 complete: [X] passed, [Y] failed"
+4. Finalize → Send: "Step 4 complete: Test run finished"
 
 NO PR REQUIRED - just run tests and report results.
         `.trim();
@@ -342,22 +432,43 @@ NO PR REQUIRED - just run tests and report results.
         console.log('Starting Devin session to scan coverage');
 
         const prompt = `
-You are scanning test coverage for a Go project.
+REPOSITORY CONTEXT:
+- GitHub Repo: ${repo.url}
+- Clone: git clone ${repo.url}.git
+- Branch: ${repo.branch}
+- Target: vendor/experian/ (Experian/mittens subtree)
 
-REPOSITORY: ${repo.url}
-BRANCH: ${repo.branch}
+TASK: Run coverage scan and report detailed results
 
-TASK: Run coverage scan and report detailed results by package.
-
-STEPS:
-1. Clone the repo and checkout "${repo.branch}"
+INSTRUCTIONS:
+1. Clone the repository
 2. Navigate to vendor/experian/
-3. Run "go test -cover ./..."
-4. Run "go test -coverprofile=coverage.out ./..."
-5. Run "go tool cover -func=coverage.out"
-6. Report coverage percentage for each package
+3. Run: go test -cover ./...
+4. Run: go test -coverprofile=coverage.out ./...
+5. Run: go tool cover -func=coverage.out
+6. Parse and report coverage by package
 
-NO PR REQUIRED - just scan and report coverage results.
+STRUCTURED OUTPUT SCHEMA (REQUIRED):
+Update this structured output with coverage data:
+{
+  "tests_passed": 0,
+  "tests_failed": 0,
+  "failing_tests": [],
+  "coverage": 0,
+  "packages": [
+    {"name": "package_name", "coverage": 0}
+  ]
+}
+
+Please update the structured output immediately after the coverage scan completes.
+
+PROGRESS:
+1. Clone Repository → Send: "Step 1 complete: Cloned repo"
+2. Run Coverage → Send: "Step 2 complete: Running coverage scan..."
+3. Parse Results → Send: "Step 3 complete: Coverage is [X]%"
+4. Finalize → Send: "Step 4 complete: Coverage scan finished"
+
+NO PR REQUIRED - just scan coverage and report results.
         `.trim();
 
         const session = await this.createSession({ prompt });
